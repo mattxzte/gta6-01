@@ -1,158 +1,68 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SOLMAR HEAT — an open-world crime game</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #10141a;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif; color: #f2f2f2; }
-  #game { position: fixed; inset: 0; }
-  #game canvas { display: block; }
-  .overlay { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
-  /* ---- HUD ---- */
-  #hudTopLeft { position: absolute; top: 14px; left: 14px; display: flex; flex-direction: column; gap: 6px; }
-  .pill { background: rgba(10, 14, 20, 0.72); border: 1px solid rgba(255, 215, 0, 0.35);
-    border-radius: 8px; padding: 7px 12px; font-size: 15px; font-weight: 700; letter-spacing: 0.5px;
-    width: max-content; text-shadow: 0 1px 2px #000; }
-  #hudCash { color: #7dff8a; font-size: 19px; }
-  #hudHealthWrap { display: flex; align-items: center; gap: 8px; }
-  #hudHealthBar { width: 150px; height: 12px; background: rgba(255,255,255,0.18); border-radius: 6px; overflow: hidden; }
-  #hudHealthFill { height: 100%; width: 100%; background: #2ecc40; border-radius: 6px; }
-  #hudStars { position: absolute; top: 14px; right: 16px; font-size: 30px; letter-spacing: 4px;
-    color: #ffd700; text-shadow: 0 0 10px rgba(255, 60, 60, 0.8), 0 2px 3px #000; }
-  #hudStars.hot { animation: pulse 0.7s infinite alternate; }
-  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.12); } }
-  #hudObjectiveBox { position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
-    text-align: center; max-width: 640px; }
-  #hudObjective { background: rgba(10, 14, 20, 0.72); border: 1px solid rgba(255,215,0,0.35);
-    border-radius: 8px; padding: 8px 16px; font-size: 15px; font-weight: 600; display: inline-block; }
-  #hudObjectiveDist { color: #ffd700; font-weight: 800; margin-left: 8px; }
-  #hudTimer { display: none; margin-top: 6px; font-size: 26px; font-weight: 800; color: #ff5a4a;
-    text-shadow: 0 2px 4px #000; }
-  #hudSpeed { position: absolute; right: 18px; bottom: 18px; font-size: 26px; font-weight: 800;
-    background: rgba(10,14,20,0.72); border-radius: 8px; padding: 6px 14px; display: none; }
-  #hudAmmo { position: absolute; right: 18px; bottom: 64px; font-size: 15px; font-weight: 700;
-    background: rgba(10,14,20,0.72); border-radius: 8px; padding: 6px 12px; }
-  #minimap { position: absolute; left: 14px; bottom: 14px; width: 200px; height: 200px;
-    border: 2px solid rgba(255,215,0,0.55); border-radius: 10px; background: #20262b; }
-  #hudToast { position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: center; gap: 6px; width: 620px; }
-  .toast { background: rgba(10,14,20,0.85); border: 1px solid rgba(255,215,0,0.5); border-radius: 8px;
-    padding: 8px 16px; font-size: 15px; font-weight: 600; text-align: center;
-    opacity: 1; transition: opacity 0.6s; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
-  .toast.fade { opacity: 0; }
-  #crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px;
-    transform: translate(-50%, -50%); display: none; }
-  #crosshair::before, #crosshair::after { content: ""; position: absolute; background: #fff;
-    box-shadow: 0 0 4px #000; }
-  #crosshair::before { left: 10px; top: 0; width: 2px; height: 22px; }
-  #crosshair::after { left: 0; top: 10px; width: 22px; height: 2px; }
-  #damageFlash { position: fixed; inset: 0; pointer-events: none; z-index: 6;
-    box-shadow: inset 0 0 90px 30px rgba(255, 0, 0, 0); transition: box-shadow 0.18s; }
-  #damageFlash.hit { box-shadow: inset 0 0 90px 30px rgba(255, 0, 0, 0.55); }
-  .hint { position: absolute; right: 18px; top: 110px; font-size: 12px; color: rgba(255,255,255,0.75);
-    background: rgba(10,14,20,0.55); border-radius: 6px; padding: 6px 10px; line-height: 1.6; text-align: right; }
-  /* ---- Full-screen screens ---- */
-  .screen { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center;
-    background: linear-gradient(160deg, rgba(8,12,20,0.88), rgba(30,20,10,0.82)); pointer-events: auto; }
-  .screen.show { display: flex; }
-  .panel { max-width: 640px; width: calc(100% - 40px); text-align: center; padding: 34px 30px;
-    background: rgba(12, 18, 28, 0.92); border: 1px solid rgba(255,215,0,0.45); border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
-  .panel h1 { font-size: 52px; letter-spacing: 4px; color: #ffd700;
-    text-shadow: 0 0 24px rgba(255, 160, 0, 0.55), 0 3px 0 #7a4a00; margin-bottom: 4px; }
-  .panel h2 { font-size: 15px; font-weight: 600; color: #9fd8ff; letter-spacing: 2px; margin-bottom: 16px; }
-  .panel p { font-size: 15px; line-height: 1.65; color: #e8e8e8; margin-bottom: 14px; }
-  .panel .controls { font-size: 13.5px; line-height: 1.9; color: #c8c8c8; margin-bottom: 18px;
-    background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px; text-align: left; }
-  .panel .controls b { color: #ffd700; }
-  button { pointer-events: auto; cursor: pointer; font-size: 16px; font-weight: 800; letter-spacing: 1px;
-    color: #1a1200; background: linear-gradient(180deg, #ffe066, #f5b301); border: none; border-radius: 10px;
-    padding: 12px 26px; margin: 4px; box-shadow: 0 4px 0 #8a6400, 0 6px 16px rgba(0,0,0,0.45); }
-  button:hover { filter: brightness(1.08); }
-  button:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a6400; }
-  button.ghost { background: rgba(255,255,255,0.12); color: #f2f2f2; box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
-  #saveNote { font-size: 13px; color: #9fd8ff; margin-top: 10px; }
-  #howto { display: none; text-align: left; font-size: 13.5px; line-height: 1.8; color: #d8d8d8;
-    background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; }
-  #howto.show { display: block; }
-  #deadScreen h1 { color: #ff3b30; text-shadow: 0 0 24px rgba(255,0,0,0.6); }
-  .foot { margin-top: 16px; font-size: 12px; color: rgba(255,255,255,0.45); }
-</style>
+<title>SOLMAR HEAT II — Open-World Crime Game</title>
+<link rel="stylesheet" href="./src/style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js" } }
+</script>
 </head>
 <body>
-<div id="game"></div>
-<div id="damageFlash"></div>
+<div id="app"></div>
 
-<div class="overlay" id="hud">
-  <div id="hudTopLeft">
-    <div class="pill" id="hudCash">$150</div>
-    <div class="pill" id="hudHealthWrap">♥ <span id="hudHealthBar"><span id="hudHealthFill" style="display:block"></span></span><span id="hudHealthText">100</span></div>
+<div id="hud" style="display:none">
+  <div id="topbar">
+    <div id="money">$500</div>
+    <div id="stars">☆☆☆☆☆</div>
+    <div id="clock">9:12 AM</div>
   </div>
-  <div id="hudStars">☆☆☆☆☆</div>
-  <div id="hudObjectiveBox">
-    <span id="hudObjective">Welcome to Solmar</span><span id="hudObjectiveDist"></span>
-    <div id="hudTimer">2:30</div>
+  <div id="vitals">
+    <div class="bar"><div id="healthFill"></div><span id="healthNum">100</span></div>
+    <div class="bar armor"><div id="armorFill"></div></div>
   </div>
-  <div class="hint">WASD move / drive · Mouse drag camera<br>E steal / exit car · Click shoot · F punch<br>R reload · M next mission · N sound · Esc pause</div>
-  <canvas id="minimap" width="200" height="200"></canvas>
-  <div id="hudSpeed">0 km/h</div>
-  <div id="hudAmmo">AMMO 12 / 12</div>
-  <div id="hudToast"></div>
-  <div id="crosshair"></div>
+  <div id="objective"><div id="objTitle">Free Roam</div><div id="objText"></div></div>
+  <canvas id="minimap" width="220" height="220"></canvas>
+  <div id="weaponBox"><span id="weapon">P9 Pistol</span><span id="ammo">48 / ∞</span></div>
+  <div id="driveBox"><span id="speed">0 km/h</span><span id="radio">SOL FM 88.1</span></div>
+  <div id="toast"><div id="toastTitle"></div><div id="toastText"></div></div>
+  <div id="interact"></div>
+  <div id="crosshair">+</div>
+  <div id="damage"></div>
+  <div id="fps" style="display:none">-- fps</div>
 </div>
 
-<div class="screen show" id="menu">
+<div id="menu" style="display:none">
   <div class="panel">
-    <h1>SOLMAR HEAT</h1>
-    <h2>AN OPEN-WORLD CRIME GAME · SOLMAR, A SUN-SOAKED COASTAL CITY</h2>
-    <p>Jax Marlowe is back in Solmar with empty pockets and a crew that owes
-    everybody. Mara Voss has five jobs lined up — borrowed wheels, three drops,
-    a hot pursuit, a rival crew, and one last grab at the Solmar Grand. Steal
-    cars, outrun the SPD, and take the city job by job.</p>
-    <div class="controls">
-      <b>WASD</b> move on foot / drive &nbsp;·&nbsp; <b>Mouse drag</b> camera, <b>wheel</b> zoom<br>
-      <b>E</b> steal a car / get out &nbsp;·&nbsp; <b>Click</b> shoot, <b>F</b> punch, <b>R</b> reload<br>
-      <b>Shift</b> sprint, <b>Space</b> jump / handbrake &nbsp;·&nbsp; <b>M</b> next mission, <b>N</b> sound, <b>Esc</b> pause<br>
-      Follow the <b style="color:#ffd700">gold beacon</b> and the minimap to each job.
-    </div>
-    <button id="btnStart">▶ START NEW GAME</button>
-    <button id="btnContinue" class="ghost">CONTINUE</button>
-    <button id="btnHow" class="ghost">HOW TO PLAY</button>
-    <div id="howto">
-      Steal any parked car with <b>E</b> — jacking a car with a driver brings the
-      cops. Shooting, wrecking cruisers and punching officers raise your wanted
-      level; lay low and the heat cools off. Pick up green cash drops. Finish
-      all five missions to own Solmar. Your progress autosaves every 30 seconds.
-    </div>
-    <div id="saveNote"></div>
-    <div class="foot">SOLMAR HEAT · an original game built for the make.fun “Make GTA 6” bounty.<br>
-    All city, characters, story, art and music are original. No network requests — it plays offline.</div>
+    <h1 id="menuTitle">SOLMAR HEAT II</h1>
+    <p id="menuBody"></p>
+    <div id="menuList"></div>
+    <p class="fine">WASD move / drive · Shift run · Space jump / handbrake · E enter car &amp; interact · F punch · Mouse drag camera · Click shoot · 1/2/3 weapons · Q cycle weapon · M next job · N radio · H horn · C camera · P pause</p>
   </div>
 </div>
 
-<div class="screen" id="pauseScreen">
+<div id="center" style="display:none">
   <div class="panel">
-    <h1 style="font-size:38px">PAUSED</h1>
-    <p>Solmar waits for no one — except right now.</p>
-    <button id="btnResume">RESUME</button>
-    <button id="btnSaveQuit" class="ghost">SAVE &amp; QUIT TO MENU</button>
+    <h1 id="centerTitle"></h1>
+    <p id="centerText"></p>
+    <p id="centerHint"></p>
   </div>
 </div>
 
-<div class="screen" id="deadScreen">
+<div id="help" style="display:none">
   <div class="panel">
-    <h1>WASTED</h1>
-    <p id="deadText">Taken down on the streets of Solmar.</p>
-    <button id="btnRespawn">RESPAWN AT THE HOSPITAL (−$150)</button>
+    <h1>HOW TO PLAY</h1>
+    <p>Dante Cruz is back in Solmar Bay. Take jobs with <b>M</b>, steal cars with <b>E</b>, and watch the stars — the police answer every crime.</p>
+    <p><b>On foot:</b> WASD to move, Shift to run, Space to jump, F to punch, click to shoot, 1/2/3 to swap weapons.</p>
+    <p><b>Driving:</b> W accelerate, S brake / reverse, A/D steer, Space handbrake, E to get out, H to honk.</p>
+    <p><b>The city:</b> gun shop, diner, Pay ’n Spray, Mara’s Garage and the safehouse are marked on the minimap. The garage stores up to 4 cars and sells engine and armor upgrades. The safehouse saves your game.</p>
+    <p><b>Wanted:</b> stealing cars, hitting pedestrians and shooting raise your heat. Hide until the stars fade, or pay at the spray shop.</p>
+    <p><b>Radio:</b> N changes station. All music is synthesized live — SOL FM, Palma, Neon and Talk Solmar.</p>
+    <button onclick="document.getElementById('help').style.display='none'">Close</button>
   </div>
 </div>
 
-<script type="importmap">
-{ "imports": { "three": "./vendor/three/three.module.min.js" } }
-</script>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

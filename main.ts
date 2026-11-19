@@ -1,39 +1,29 @@
-// SOLMAR HEAT — the entry program for the make.fun gta6-01 bounty.
-// Node 22, standard library only. It gathers the game (game/) and the
-// screenshots (screenshots/) from beside this file into /output and
-// writes /output/dossier.json with the kit's buildDossier library, so
-// the gate can check the entry and the judge can read it. Outside the
-// grader, MAKEFUN_OUTPUT_DIR stands in for /output:
-//   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
-
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+// main.ts — SOLMAR HEAT II entrypoint (Node 22).
+// Copies game/ and screenshots/ from this repository to the output directory
+// and writes /output/dossier.json with buildDossier from the kit's vendored
+// library (vendor/makefun-game.ts, unchanged). Outside the grader,
+// MAKEFUN_OUTPUT_DIR stands in for /output.
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
 
-const here = fileURLToPath(new URL('.', import.meta.url));
-const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
+const repoRoot = dirname(fileURLToPath(import.meta.url));
+const outDir = process.env.MAKEFUN_OUTPUT_DIR || '/output';
 
-mkdirSync(out, { recursive: true });
-cpSync(join(here, 'game'), join(out, 'game'), { recursive: true });
-mkdirSync(join(out, 'screenshots'), { recursive: true });
-if (existsSync(join(here, 'screenshots'))) {
-  cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
-}
+const gameSrc = join(repoRoot, 'game');
+const shotsSrc = join(repoRoot, 'screenshots');
+if (!existsSync(gameSrc)) throw new Error('main.ts: game/ is missing from the repository');
+if (!existsSync(shotsSrc)) throw new Error('main.ts: screenshots/ is missing from the repository');
 
-// The scorer's own caps (kit reference/gate.json): the text cap shapes
-// the dossier's bytes; the rest refuse an entry the scorer would refuse
-// (more than 4 screenshots or one over 256 KiB; more than 993 entries in
-// game/ or 48 MiB of game files in all, or a path under game/ over
-// 1000 bytes: game/ counts beside /output's own 1000-entry cap, its
-// screenshots/ and dossier.json).
-writeFileSync(
-  join(out, 'dossier.json'),
-  buildDossier(out, {
-    text_max_bytes: 163840,
-    screenshots: { max: 4, max_bytes: 262144 },
-    game_max_files: 993,
-    game_max_bytes: 50331648,
-    game_path_max_bytes: 1000,
-  }),
-);
+rmSync(outDir, { recursive: true, force: true });
+mkdirSync(outDir, { recursive: true });
+cpSync(gameSrc, join(outDir, 'game'), { recursive: true });
+cpSync(shotsSrc, join(outDir, 'screenshots'), { recursive: true });
+
+const dossier = await buildDossier(outDir, {
+  text_max_bytes: 163840,
+  screenshots: { max: 4, max_bytes: 262144 },
+});
+writeFileSync(join(outDir, 'dossier.json'), dossier);
+console.log('SOLMAR HEAT II handed in: game/ + screenshots/ + dossier.json in ' + outDir);

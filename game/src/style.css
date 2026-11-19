@@ -1,0 +1,50 @@
+/* SOLMAR HEAT II — HUD and menu styling. */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0f16; font-family: 'Segoe UI', Arial, sans-serif; }
+#app, #app canvas { position: fixed; inset: 0; display: block; }
+#hud { position: fixed; inset: 0; pointer-events: none; color: #fff; z-index: 5; }
+
+#topbar { position: absolute; top: 14px; right: 18px; text-align: right; text-shadow: 0 2px 4px #000; }
+#money { font-size: 26px; font-weight: 800; color: #7dff9a; }
+#stars { font-size: 24px; letter-spacing: 4px; color: #ffd24d; }
+#stars.hot { animation: blink 0.8s infinite alternate; }
+@keyframes blink { from { opacity: 1; } to { opacity: 0.55; } }
+#clock { font-size: 15px; color: #dfe8f0; }
+
+#vitals { position: absolute; top: 14px; left: 18px; width: 240px; }
+.bar { position: relative; height: 16px; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.35); margin-bottom: 5px; }
+.bar > div { height: 100%; width: 100%; }
+#healthFill { background: linear-gradient(90deg, #37c24a, #7dff5a); }
+.bar.armor { height: 9px; }
+#armorFill { background: linear-gradient(90deg, #3a7ad8, #7ab8ff); }
+#healthNum { position: absolute; right: 6px; top: -1px; font-size: 13px; font-weight: 700; text-shadow: 0 1px 2px #000; }
+
+#objective { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); text-align: center; text-shadow: 0 2px 4px #000; max-width: 560px; }
+#objTitle { font-size: 17px; font-weight: 800; color: #ffd24d; letter-spacing: 1px; }
+#objText { font-size: 14px; color: #eef4fa; }
+
+#minimap { position: absolute; left: 18px; bottom: 18px; width: 220px; height: 220px; border: 2px solid rgba(255,255,255,0.5); border-radius: 50%; background: #0e1a24; box-shadow: 0 4px 18px rgba(0,0,0,0.5); }
+
+#weaponBox { position: absolute; right: 18px; bottom: 64px; text-align: right; text-shadow: 0 2px 4px #000; }
+#weapon { display: block; font-size: 19px; font-weight: 800; }
+#ammo { font-size: 15px; color: #ffd24d; }
+#driveBox { position: absolute; right: 18px; bottom: 18px; text-align: right; text-shadow: 0 2px 4px #000; }
+#speed { display: block; font-size: 24px; font-weight: 800; }
+#radio { font-size: 13px; color: #bcd8ee; }
+
+#toast { position: absolute; top: 110px; left: 50%; transform: translateX(-50%); text-align: center; background: rgba(8,12,20,0.72); border-left: 4px solid #ffd24d; padding: 10px 22px; opacity: 0; transition: opacity 0.4s; max-width: 640px; }
+#toastTitle { font-size: 19px; font-weight: 800; color: #ffd24d; letter-spacing: 1px; }
+#toastText { font-size: 14px; color: #eef4fa; }
+#interact { position: absolute; bottom: 250px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.65); padding: 7px 16px; font-size: 15px; font-weight: 700; display: none; border-radius: 4px; }
+#crosshair { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 300; color: rgba(255,255,255,0.9); text-shadow: 0 0 4px #000; display: none; }
+#damage { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(200,0,0,0.55) 100%); opacity: 0; }
+#fps { position: absolute; top: 90px; left: 18px; font-size: 13px; background: rgba(0,0,0,0.6); padding: 3px 8px; }
+
+#menu, #center { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(5, 8, 14, 0.55); z-index: 10; }
+#help { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(5, 8, 14, 0.7); z-index: 20; }
+.panel { background: rgba(10, 16, 26, 0.92); border: 1px solid #ffd24d; padding: 30px 38px; max-width: 620px; text-align: center; box-shadow: 0 12px 50px rgba(0,0,0,0.6); }
+.panel h1 { color: #ffd24d; font-size: 40px; letter-spacing: 3px; margin-bottom: 10px; text-shadow: 0 3px 0 #7a2a12; }
+.panel p { color: #dfe8f0; font-size: 15px; line-height: 1.55; margin-bottom: 12px; }
+.panel .fine { font-size: 12px; color: #9ab0c2; margin-top: 16px; }
+#menuList button, .panel button { display: block; width: 100%; margin: 7px 0; padding: 11px; font-size: 16px; font-weight: 700; background: #ffd24d; color: #1a1206; border: none; cursor: pointer; }
+#menuList button:hover, .panel button:hover { background: #ffe14d; }
